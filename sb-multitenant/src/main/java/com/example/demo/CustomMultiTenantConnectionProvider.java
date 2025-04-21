@@ -2,12 +2,13 @@ package com.example.demo;
 
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
 import org.hibernate.service.spi.Stoppable;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-@Component
+@Configuration
 public class CustomMultiTenantConnectionProvider implements MultiTenantConnectionProvider<String>, Stoppable {
 
     private final DataSource dataSource;

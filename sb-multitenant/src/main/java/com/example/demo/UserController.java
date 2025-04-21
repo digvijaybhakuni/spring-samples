@@ -1,6 +1,8 @@
 package com.example.demo;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -14,26 +16,35 @@ public class UserController {
     @Autowired
     private TenantIdentifierResolver tenantIdentifierResolver;
 
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
     @GetMapping
-    public List<User> getAllUsers(@RequestHeader("X-TenantID") String tenant) {
+    public List<User> getAllUsers() {
+
         return userRepository.findAll();
     }
 
+    @GetMapping("/public")
+    public List<User> getAllPublicUser() {
+        transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        tenantIdentifierResolver.setCurrentTenant("public");
+        return transactionTemplate.execute(tx -> {
+            return userRepository.findAll();
+        });
+    }
     @GetMapping("/{id}")
-    public User getUserById(@RequestHeader("X-TenantID") String tenant, @PathVariable Long id) {
-        tenantIdentifierResolver.setCurrentTenant(tenant);
+    public User getUserById(@PathVariable Long id) {
         return userRepository.findById(id).orElse(null);
     }
 
     @PostMapping
-    public User createUser(@RequestHeader("X-TenantID") String tenant, @RequestBody User user) {
-        tenantIdentifierResolver.setCurrentTenant(tenant);
+    public User createUser(@RequestBody User user) {
         return userRepository.save(user);
     }
 
     @PutMapping("/{id}")
-    public User updateUser(@RequestHeader("X-TenantID") String tenant, @PathVariable Long id, @RequestBody User userDetails) {
-        tenantIdentifierResolver.setCurrentTenant(tenant);
+    public User updateUser(@PathVariable Long id, @RequestBody User userDetails) {
         return userRepository.findById(id).map(user -> {
             user.setUsername(userDetails.getUsername());
             user.setEmail(userDetails.getEmail());
@@ -42,8 +53,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@RequestHeader("X-TenantID") String tenant, @PathVariable Long id) {
-        tenantIdentifierResolver.setCurrentTenant(tenant);
+    public void deleteUser(@PathVariable Long id) {
         userRepository.deleteById(id);
     }
 }

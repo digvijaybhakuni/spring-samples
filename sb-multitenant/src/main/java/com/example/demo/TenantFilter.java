@@ -2,6 +2,8 @@ package com.example.demo;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
+
+import org.apache.tomcat.util.http.parser.TE;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -17,6 +19,8 @@ public class TenantFilter implements Filter {
         String tenantId = ((HttpServletRequest) request).getHeader(TENANT_HEADER);
         if (tenantId != null && !tenantId.isEmpty()) {
             TenantContext.setCurrentTenant(tenantId);
+        } else {
+            TenantContext.setCurrentTenant("public");
         }
         try {
             chain.doFilter(request, response);
