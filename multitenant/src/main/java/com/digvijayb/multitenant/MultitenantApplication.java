@@ -3,6 +3,7 @@ package com.digvijayb.multitenant;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import org.apache.tomcat.util.http.parser.TE;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -69,10 +70,13 @@ public class MultitenantApplication {
         }
 
         public Collection<User> getPublicUsers() {
-            return txTemplate.execute(tx -> {
-//               TenantContext.setCurrentTenant("public");
+            String currentTenant = TenantContext.getCurrentTenant();
+            TenantContext.setCurrentTenant("public");
+            Collection<User> publicUsers = txTemplate.execute(tx -> {
                 return getUsers();
             });
+            TenantContext.setCurrentTenant(currentTenant);
+            return publicUsers;
         }
     }
 
@@ -93,8 +97,11 @@ public class MultitenantApplication {
 
         @GetMapping("public")
         public Collection<User> getPublicUsers() {
-            tenantIdentifierResolver.setCurrentTenant("public");
-            return service.getUsers();
+//            tenantIdentifierResolver.setCurrentTenant("public");
+            System.out.println("service.getUsers() = " + service.getUsers());
+            Collection<User> publicUsers = service.getPublicUsers();
+            System.out.println("service.getUsers() = " + service.getUsers());
+            return publicUsers;
         }
 	}
 
